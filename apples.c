@@ -103,9 +103,12 @@ void dumpScreensaverSettings() {
     free(reply);
 }
 void usage() {
-    printf("apples [-h] [cmd [cycleCmd]]");
+    printf("apples [-h1] [cmd [cycleCmd]]");
 }
 int main(int argc, const char* const argv[]) {
+    int runCycledOnce = 0;
+    int cycled = 0;
+
     signal(SIGCHLD, reapChildren);
     initConnection();
     if(argc == 1) {
@@ -122,13 +125,15 @@ int main(int argc, const char* const argv[]) {
             case 'h':
                 usage();
                 exit(0);
+            case '1': // run cycle command once
+                runCycledOnce = 1;
+                break;
             default:
                 usage();
                 exit(1);
         }
     }
 
-    int cycled = 0;
     const char* const screensaverCmd = argv[0];
     if(!screensaverCmd){
         usage();
@@ -152,7 +157,7 @@ int main(int argc, const char* const argv[]) {
                     childCmd = spawnCmd(screensaverCmd);
             }
             else if(screensaverEvent->state == XCB_SCREENSAVER_STATE_CYCLE) {
-                if(!cycled && cycleCmd)
+                if((!runCycledOnce || !cycled) && cycleCmd)
                     spawnCmd(cycleCmd);
                 cycled = 1;
             }
