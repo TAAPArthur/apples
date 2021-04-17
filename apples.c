@@ -77,12 +77,13 @@ pid_t spawnCmd(const char* cmd) {
 }
 pid_t childCmd;
 void reapChildren() {
-    pid_t pid;
-    while((pid = waitpid(childCmd, NULL, -1) != -1)){
-        if(pid == childCmd)
-            childCmd = 0;
+    pid_t pid = waitpid(childCmd, NULL, WNOHANG);
+    if(pid == childCmd) {
+        childCmd = 0;
     }
+    while(waitpid(-1, NULL, 0) > 0);
 }
+
 int main(int argc, const char* const argv[]) {
     signal(SIGCHLD, reapChildren);
     initConnection();
