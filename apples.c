@@ -16,19 +16,17 @@ xcb_ewmh_connection_t* ewmh;
 char screensaverFirstEvent;
 char screensaverDisabled = 0;
 
-int catchErrorSilent(xcb_void_cookie_t cookie) {
+void catchError(xcb_void_cookie_t cookie) {
     xcb_generic_error_t* e = xcb_request_check(dis, cookie);
-    int errorCode = 0;
     if(e) {
-        errorCode = e->error_code;
         free(e);
+        exit(1);
     }
-    return errorCode;
 }
-int registerForWindowEvents(xcb_window_t window, int mask) {
+void registerForWindowEvents(xcb_window_t window, int mask) {
     xcb_void_cookie_t cookie;
     cookie = xcb_change_window_attributes_checked(dis, window, XCB_CW_EVENT_MASK, &mask);
-    return catchErrorSilent(cookie);
+    catchError(cookie);
 }
 void initConnection() {
     dis = xcb_connect(NULL, NULL);
@@ -37,7 +35,7 @@ void initConnection() {
     xcb_ewmh_init_atoms_replies(ewmh, cookie, NULL);
     root = ewmh->screens[0]->root;
     registerForWindowEvents(root, XCB_EVENT_MASK_PROPERTY_CHANGE);
-    catchErrorSilent(xcb_screensaver_select_input_checked(dis, root, XCB_SCREENSAVER_EVENT_NOTIFY_MASK | XCB_SCREENSAVER_EVENT_CYCLE_MASK));
+    catchError(xcb_screensaver_select_input_checked(dis, root, XCB_SCREENSAVER_EVENT_NOTIFY_MASK | XCB_SCREENSAVER_EVENT_CYCLE_MASK));
     screensaverFirstEvent = xcb_get_extension_data(dis, &xcb_screensaver_id)->first_event;
 }
 
