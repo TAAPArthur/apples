@@ -68,14 +68,23 @@ int checkActiveWindow() {
     return 0;
 }
 
-void spawnCmd(const char* cmd) {
+pid_t spawnCmd(const char* cmd) {
     pid_t pid = fork();
     if(!pid) {
         execl(SHELL, SHELL, "-c", cmd, NULL);
     }
-    waitpid(pid, NULL, -1);
+    return pid;
+}
+pid_t childCmd;
+void reapChildren() {
+    pid_t pid;
+    while((pid = waitpid(childCmd, NULL, -1) != -1)){
+        if(pid == childCmd)
+            childCmd = 0;
+    }
 }
 int main(int argc, const char* const argv[]) {
+    signal(SIGCHLD, reapChildren);
     initConnection();
     if(argc == 1)
         exit(2);
@@ -94,11 +103,12 @@ int main(int argc, const char* const argv[]) {
         } else if(event->response_type == screensaverFirstEvent + XCB_SCREENSAVER_NOTIFY){
             screensaverEvent = (xcb_screensaver_notify_event_t*)event;
             if(screensaverEvent->state == XCB_SCREENSAVER_STATE_ON) {
-                spawnCmd(screensaverCmd);
+                if(!childCmd)
+                    childCmd = spawnCmd(screensaverCmd);
             }
             else if(screensaverEvent->state == XCB_SCREENSAVER_STATE_CYCLE) {
-                if(!cycled && cycleCmd )
-                    spawnCmd(cycleCmd );
+                if(!cycled && cycleCmd)
+                    spawnCmd(cycleCmd);
                 cycled = 1;
             }
             else {
