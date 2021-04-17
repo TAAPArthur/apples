@@ -83,12 +83,34 @@ void reapChildren() {
     }
     while(waitpid(-1, NULL, 0) > 0);
 }
-
+#define CASE_SET(C, V) case C: V = #C; break;
+void dumpScreensaverSettings() {
+    xcb_screensaver_query_info_reply_t* reply =
+    xcb_screensaver_query_info_reply(dis, xcb_screensaver_query_info (dis, root), NULL);
+    const char* kindStr = NULL;
+    const char* stateStr = NULL;
+    switch(reply->kind) {
+        CASE_SET(XCB_SCREENSAVER_KIND_BLANKED, kindStr);
+        CASE_SET(XCB_SCREENSAVER_KIND_EXTERNAL, kindStr);
+        CASE_SET(XCB_SCREENSAVER_KIND_INTERNAL, kindStr);
+    }
+    switch(reply->state) {
+        CASE_SET(XCB_SCREENSAVER_STATE_OFF, stateStr);
+        CASE_SET(XCB_SCREENSAVER_STATE_ON, stateStr);
+        CASE_SET(XCB_SCREENSAVER_STATE_CYCLE, stateStr);
+        CASE_SET(XCB_SCREENSAVER_STATE_DISABLED, stateStr);
+    }
+    printf("State: %s Window: %d MS_UNTIL: %d MS_SINCE: %d Mask: %d Kind: %s\n",
+            stateStr, reply->saver_window, reply->ms_until_server, reply->ms_since_user_input, reply->event_mask, kindStr);
+    free(reply);
+}
 int main(int argc, const char* const argv[]) {
     signal(SIGCHLD, reapChildren);
     initConnection();
-    if(argc == 1)
-        exit(2);
+    if(argc == 1) {
+        dumpScreensaverSettings();
+        exit(0);
+    }
     int cycled = 0;
     const char* const screensaverCmd = argv[1];
     const char* const cycleCmd = argv[2];
