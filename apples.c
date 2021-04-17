@@ -102,6 +102,9 @@ void dumpScreensaverSettings() {
             stateStr, reply->saver_window, reply->ms_until_server, reply->ms_since_user_input, reply->event_mask, kindStr);
     free(reply);
 }
+void usage() {
+    printf("apples [-h] [cmd [cycleCmd]]");
+}
 int main(int argc, const char* const argv[]) {
     signal(SIGCHLD, reapChildren);
     initConnection();
@@ -109,9 +112,29 @@ int main(int argc, const char* const argv[]) {
         dumpScreensaverSettings();
         exit(0);
     }
+    argv++;
+    for(; argv[0] && argv[0][0] == '-'; argv++) {
+        if(argv[0][1] == '-') {
+            argv++;
+            break;
+        }
+        switch(argv[0][1]){
+            case 'h':
+                usage();
+                exit(0);
+            default:
+                usage();
+                exit(1);
+        }
+    }
+
     int cycled = 0;
-    const char* const screensaverCmd = argv[1];
-    const char* const cycleCmd = argv[2];
+    const char* const screensaverCmd = argv[0];
+    if(!screensaverCmd){
+        usage();
+        exit(1);
+    }
+    const char* const cycleCmd = argv[1];
 
     checkActiveWindow();
     xcb_generic_event_t* event;
