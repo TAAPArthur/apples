@@ -120,7 +120,8 @@ int main(int argc, const char* const argv[]) {
     while((event = xcb_wait_for_event(dis))) {
         xcb_screensaver_notify_event_t* screensaverEvent;
         if(event->response_type == XCB_PROPERTY_NOTIFY) {
-            if(((xcb_property_notify_event_t*)event)->atom == ewmh->_NET_ACTIVE_WINDOW) {
+            xcb_property_notify_event_t* propertyEvent = (xcb_property_notify_event_t*)event;
+            if(propertyEvent->atom == ewmh->_NET_ACTIVE_WINDOW || propertyEvent->atom == ewmh->_NET_WM_STATE_FULLSCREEN) {
                 checkActiveWindow();
             }
         } else if(event->response_type == screensaverFirstEvent + XCB_SCREENSAVER_NOTIFY){
