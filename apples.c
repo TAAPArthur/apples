@@ -75,11 +75,11 @@ pid_t spawnCmd(const char* cmd) {
 }
 pid_t childCmd;
 void reapChildren() {
-    pid_t pid = waitpid(childCmd, NULL, WNOHANG);
-    if(pid == childCmd) {
-        childCmd = 0;
-    }
-    while(waitpid(-1, NULL, 0) > 0);
+    pid_t pid;
+    while((pid = waitpid(-1, NULL, WNOHANG)) > 0)
+        if(pid == childCmd) {
+            childCmd = 0;
+        }
 }
 #define CASE_SET(C, V) case C: V = #C; break;
 void dumpScreensaverSettings() {
